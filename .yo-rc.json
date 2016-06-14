@@ -1,0 +1,10 @@
+{
+  "generator-flask-api": {
+    "appName": "plays",
+    "database": "none",
+    "databaseMapper": "none",
+    "versioningScheme": "none",
+    "currentVersion": "",
+    "urlPrefix": ""
+  }
+}
