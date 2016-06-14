@@ -5,6 +5,7 @@ Index:
 - [Running the tests](#running-the-tests)
 - [Design choices](#design-choices)
 - [Move to production](#move-to-production)
+- [Notes on scalability](#notes-on-scalability)
 - [Installation](#installation)
 
 
