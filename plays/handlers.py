@@ -31,12 +31,15 @@ def handler(e):
 def bad_request(e):
     return handler(e)
 
-
 @handlers.app_errorhandler(404)
-def bad_requestx(e):
+def not_found(e):
     return handler(e)
 
+@handlers.app_errorhandler(405)
+def method_not_allowed(e):
+    return handler(e)
 
 @handlers.app_errorhandler(500)
-def bad_requestx(e):
+def internal_error(e):
     return handler(e)
+
