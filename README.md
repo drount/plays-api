@@ -46,6 +46,7 @@ Network latencies are included (server in central	Europe).
 
 Querying a dataset of 10 channels, 30 songs and 1M plays spanning from 2015-01
 to 2016-12 yielded the following results:
+
 | Endpoint          | Concurrent Users | Total Calls |  Mean | Median | 90% Line | 95% Line |
 |-------------------|--------:|------:|------:|-------:|---------:|---------:|
 | get_channel_plays | 10      | 10000 |    91 |     88 |      109 |      121 |
