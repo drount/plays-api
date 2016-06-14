@@ -4,7 +4,7 @@
 Index:
 - [Running the tests](#running-the-tests)
 - [Design choices](#design-choices)
-- [Move to production](#moving-to-production)
+- [Move to production](#move-to-production)
 - [Installation](#installation)
 
 
