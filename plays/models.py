@@ -49,6 +49,10 @@ class PlayByChannel(Model):
     
     def __init__(self, *args, **kwargs):
         super(PlayByChannel, self).__init__(*args, **kwargs)
+        PlayByChannel._initialize_statements()
+    
+    @staticmethod
+    def _initialize_statements():
         if not PlayByChannel.song_counts_stmt:
             PlayByChannel.song_counts_stmt = session.prepare(
                 """
@@ -67,6 +71,8 @@ class PlayByChannel(Model):
 
     @staticmethod
     def get_song_counts(channels, start, end):
+        PlayByChannel._initialize_statements()
+            
         # TODO: Limit songs by count threshold
         # Launch async queries for every channel
         futures = []
