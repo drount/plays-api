@@ -16,24 +16,25 @@ the API. You can easily run the tests with the following command:
 python test.py -H api.rxuriguera.com -P 80
 ```
 
-**Important:** The original `test.py` was slightly modified in order to send a JSON body
-for the POST requests. This is done to comply with the specification shown in the
-description PDF. Please use the test script included in the project.
+**Important:** The original `test.py` was slightly modified to send a JSON body
+for the POST requests. See the change below. This is done to comply with the
+specification in the description PDF. Please use the `test.py` script included in the project.
 
 ```python
 # req = urllib2.Request(url, urllib.urlencode(data))
 req = urllib2.Request(url, json.dumps(data), {'Content-Type': 'application/json'})
 ```
 
-There is an additional API endpoint not present in the specification that
-reinitializes the database: `POST /truncate_tables`.
-The body of the request must contain a security flag set to true:
+There is an additional API endpoint not present in the specification to
+reinitialize the database: `POST /truncate_tables`.
+The body of the request must contain a security flag set to `true`:
 
 ```json
 {"truncate": true}
 ```
 
-A [Jmeter](#) JMX test plan is included with the source code. It can be used to
+A [Jmeter](#http://jmeter.apache.org) JMX test plan is included along the
+source code. It can be used to
 easily test the performance of the API. Below are some request times in milliseconds.
 Network latencies are included (server in central	Europe).
 
@@ -55,44 +56,45 @@ to 2016-12 yielded the following results:
 
 Request times for the `get_channel_plays` and `get_song_plays` are strongly
 dependent on the start-end parameters. The broader the time range, the longer
-the response body which results in higher network latencies. High `get_top`
-time is due to the complexity of the query.
+the response body which in turn results in higher network latencies.
+High `get_top` time is due to the complexity of the query.
 
 
 ### Design Choices
-[Flask](#http://flask.pocoo.org/) framework is used because
-it is lightweight and no admin site or forms are needed for this pilot.
+No admin site or forms are needed for this pilot, so the lightweight
+[Flask](#http://flask.pocoo.org/) framework was chosen to implement the API.
 Unlike other specialized frameworks such as Django REST Frmaework, Flask comes
-with no serializers. [Marshmallow](#https://marshmallow.readthedocs.io/en/latest/) is used for
-validation and object serialization/deserialization.
+with no serializers. [Marshmallow](#https://marshmallow.readthedocs.io/en/latest/)
+handles object serialization/deserialization and validation.
 
-As for the database, both a relational and NoSQL database were considered:
-MySQL and **Cassandra**.
+As for the database, both a relational (MySQL) and a NoSQL database (Cassandra) were considered,
+finally opting for the latter.
 
 Though not a technical argument, the main reason why I chose
 Cassandra over MySQL is that I had never used Cassandra before. It would
 have been probably faster to implement this prototype using MySQL, but since I am applying
-for a position where trying new technologies and algorithms is expected,
-I took this as an opportunity to get started with a new tool.
+for a position where testing new technologies and algorithms is expected,
+I took this pilot as an opportunity to get started with a new tool.
 
 There are other valid points to back up this decision:
 - Cassandra
 	- Pros:
 		- **Fast writes**: Writes will be far more common than reads in our application (many channels steadily publishing plays).
-		- Distributed and Fault tolerant: nodes can fail without
+		- Distributed and fault tolerant: nodes can fail without
 		  compromising uptime. P2P communication between nodes.
-		- Scalability: reportedly, linear scalability
-		- [Good for time series](#http://www.datastax.com/dev/blog/advanced-time-series-with-cassandra): rows can have millions of columns
+		- Scalability: reportedly, linear scalability.
+		- [Good for time series](#http://www.datastax.com/dev/blog/advanced-time-series-with-cassandra): rows can have millions of columns.
 	- Cons:
 	 	- Complex Data Modelling: schema has to be carefully thought-out. Almost one table per query type.
+		  Changes in the data model are often needed fro new requirements.
 - MySQL
 	- Pros:
-		- Complex and flexible queries
-		- Widely used
-		- All developers are familiar with SQL
+		- Complex and flexible queries.
+		- Widely used.
+		- All developers are familiar with SQL.
 	- Cons:
-		- Does not scale as well as other alternatives
-		- Master-Slave replication
+		- Does not scale as well as other alternatives.
+		- Master-Slave replication.
 
 Cassandra Query Language (CQL) is great but can be too limiting for situations
 like the `get_top` feature.
@@ -107,17 +109,18 @@ a production environment:
 - Validation: some basic validation of the input is already performed, but more
 	checks should be done.
 - It is probably a bad idea to use artists and songs name as identifiers.
-- Pagination for the `get_song_plays` and  `get_channel_plays` endpoints
-- Testing: Unit tests, integration tests, performance tests
-- Add time information to the plays tables' partition key. Right now a single
-  partition (song/channel) can grow to much, making it more difficult to
+- Pagination for the `get_song_plays` and  `get_channel_plays` endpoints to limiting
+  response body size.
+- Testing: unit tests, integration tests, performance tests.
+- Add time information to the some tables' partition key. Right now a single
+  partition (song/channel) can grow infinitely, making it more difficult to
 	distribute data evenly across the cluster.
 - Logging and Monitoring
-- Replication: add more nodes to the Cassandra cluster an set replication strategy.
+- Replication: add more nodes to the Cassandra cluster and set replication strategy.
 
 
 ### Notes on Scalability
-There are two easy ways of scaling the application:
+There are two basic ways of scaling the application:
 - Add more application servers behind a load balancer
 - Add more nodes to the Cassandra cluster
 
@@ -134,11 +137,11 @@ by channel or song, should also scale well.
 
 The most compromising operation is the `get_top` endpoint. These are some things
 that can be done to improve the performance of this method:
-- Use a better `top-k` query algorithm
+- Use a better *top-k* query algorithm
 - Estimate the play counts: The exact number of plays is probably not that important (bound on the error). E.g. lossy counting
 - Store aggregate counts per day and channel.
 - It looks like the `get_top` call is something that a webpage could use to show
-*weekly* top charts, by making calls with the same set of parameters. If
+*weekly* top charts, by periodically making calls with the same set of parameters. If
 we always have the same few combinations of channels, it could be pretty
 useful to cache or persist the top songs per week and group of channels.
 
@@ -166,7 +169,7 @@ Once installed, you must enable the following option in `cassandra.yml`
 enable_user_defined_functions: true
 ```
 
-Restart Cassandra service and log into using the cqlsh command
+Restart Cassandra service and log into using the `cqlsh` command
 ```
 (venv) plays-api$ cqlsh
 Connected to Plays API Cluster at 127.0.0.1:9042.
@@ -174,21 +177,23 @@ Connected to Plays API Cluster at 127.0.0.1:9042.
 Use HELP for help.
 cqlsh>
 ```
-Paste the contents of the file `db.cql` into the console. This will create the
-`plays` keyspace and the needed user-defined functions.
+Paste the contents of the file `db.cql` to the terminal to create the
+`plays` keyspace and the required user-defined functions.
 
 Create the database tables by running the following command:
 ```sh
 python manage.py sync
 ```
 
-You can set the environment with the `APP_CONFIG` environment variable. Default
-is `production`. Choose `development` to enable debugging.
+###### Development Server
+Default application environment is `production`, but you can
+override it with the `APP_CONFIG` environment variable.
+Set it to `development` to enable debugging.
 ```sh
 export APP_CONFIG=development
 ```
 
-Run a development server
+Run a development server. By default it will start listenint to `127.0.0.1:5000`
 ```sh
 python manage.py runserver
 ```
